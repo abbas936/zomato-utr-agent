@@ -178,7 +178,7 @@ def start_cloudflare_tunnel():
     """Start Cloudflare tunnel and extract the public URL."""
     def run():
         proc = subprocess.Popen(
-            ["cloudflared", "tunnel", "--url", "http://localhost:8000"],
+            ["cloudflared", "tunnel", "--url", "http://localhost:6080"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
