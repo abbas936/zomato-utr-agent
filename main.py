@@ -197,6 +197,20 @@ def start_cloudflare_tunnel():
                 if urls:
                     state["tunnel_url"] = urls[0]
                     log(f"Tunnel ready → {urls[0]}", "success")
+                    # Register with Railway so frontend can auto-detect
+                    try:
+                        import urllib.request as urlreq
+                        payload = json.dumps({"tunnel_url": urls[0]}).encode()
+                        req = urlreq.Request(
+                            "https://zomato-utr-agent-production.up.railway.app/api/register-tunnel",
+                            data=payload,
+                            headers={"Content-Type": "application/json"},
+                            method="POST"
+                        )
+                        urlreq.urlopen(req, timeout=5)
+                        log("Tunnel registered with Railway", "success")
+                    except Exception as e:
+                        log(f"Railway registration skipped: {e}", "error")
                     break
 
     threading.Thread(target=run, daemon=True).start()
