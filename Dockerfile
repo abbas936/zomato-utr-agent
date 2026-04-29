@@ -2,6 +2,9 @@ FROM mcr.microsoft.com/playwright/python:v1.44.0-jammy
 
 WORKDIR /app
 
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install noVNC dependencies
 RUN apt-get update && apt-get install -y \
     x11vnc \
