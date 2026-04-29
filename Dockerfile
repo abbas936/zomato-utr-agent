@@ -24,11 +24,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install chromium
 
 # Copy app
-COPY main.py .
+COPY main_api.py .
 
 # Create downloads directory
 RUN mkdir -p /app/zomato_downloads
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main_api:app", "--host", "0.0.0.0", "--port", "8000"]
