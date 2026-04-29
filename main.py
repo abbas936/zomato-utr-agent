@@ -76,6 +76,11 @@ def log(msg, level="info"):
 # ── FastAPI app ───────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    try:
+        start_novnc()
+        log("noVNC started on port 6080")
+    except Exception as e:
+        log(f"noVNC start skipped: {e}", "error")
     yield
     await stop_browser()
 
@@ -173,7 +178,7 @@ def start_cloudflare_tunnel():
     """Start Cloudflare tunnel and extract the public URL."""
     def run():
         proc = subprocess.Popen(
-            ["cloudflared", "tunnel", "--url", "http://localhost:6080"],
+            ["cloudflared", "tunnel", "--url", "http://localhost:8000"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
@@ -514,6 +519,18 @@ async def health():
         "tunnel_url": state["tunnel_url"],
         "downloading": state["downloading"],
     }
+
+
+import httpx
+
+@app.get("/novnc/{path:path}")
+async def proxy_novnc(path: str):
+    async with httpx.AsyncClient() as client:
+        try:
+            res = await client.get(f"http://localhost:6080/{path}")
+            return HTMLResponse(content=res.text, status_code=res.status_code)
+        except Exception as e:
+            return HTMLResponse(content=f"noVNC not ready: {e}", status_code=503)
 
 
 if __name__ == "__main__":
