@@ -178,7 +178,8 @@ def start_cloudflare_tunnel():
     """Start Cloudflare tunnel and extract the public URL."""
     def run():
         proc = subprocess.Popen(
-            ["cloudflared", "tunnel", "--url", "http://localhost:6080"],
+            ["cloudflared", "tunnel", "--url", "http://localhost:8000",
+             "--metrics", "localhost:2999"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
@@ -531,6 +532,13 @@ async def proxy_novnc(path: str):
             return HTMLResponse(content=res.text, status_code=res.status_code)
         except Exception as e:
             return HTMLResponse(content=f"noVNC not ready: {e}", status_code=503)
+
+
+
+@app.get("/api/tunnel-url")
+async def get_tunnel_url():
+    """Return the current tunnel URL — polled by frontend on load."""
+    return {"tunnel_url": state["tunnel_url"]}
 
 
 if __name__ == "__main__":
