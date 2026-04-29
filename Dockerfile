@@ -3,6 +3,7 @@ FROM mcr.microsoft.com/playwright/python:v1.44.0-jammy
 WORKDIR /app
 
 # Install noVNC dependencies
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     x11vnc \
     xvfb \
@@ -24,11 +25,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install chromium
 
 # Copy app
-COPY main_api.py .
+COPY main.py .
 
 # Create downloads directory
 RUN mkdir -p /app/zomato_downloads
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main_api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
