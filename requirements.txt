@@ -3,4 +3,5 @@ uvicorn
 playwright
 nest_asyncio
 pandas
-pyngrok
+pyngrokhttpx
+httpx
