@@ -76,19 +76,13 @@ def log(msg, level="info"):
 # ── FastAPI app ───────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start tunnel immediately so frontend can auto-detect it
-    start_cloudflare_tunnel()
-    log("Starting Cloudflare tunnel...")
     try:
         start_novnc()
         log("noVNC started on port 6080")
     except Exception as e:
         log(f"noVNC start skipped: {e}", "error")
     yield
-    try:
-        await stop_browser()
-    except:
-        pass
+    await stop_browser()
 
 app = FastAPI(title="Zomato UTR Agent", lifespan=lifespan)
 
@@ -197,20 +191,6 @@ def start_cloudflare_tunnel():
                 if urls:
                     state["tunnel_url"] = urls[0]
                     log(f"Tunnel ready → {urls[0]}", "success")
-                    # Register with Railway so frontend can auto-detect
-                    try:
-                        import urllib.request as urlreq
-                        payload = json.dumps({"tunnel_url": urls[0]}).encode()
-                        req = urlreq.Request(
-                            "https://zomato-utr-agent-production.up.railway.app/api/register-tunnel",
-                            data=payload,
-                            headers={"Content-Type": "application/json"},
-                            method="POST"
-                        )
-                        urlreq.urlopen(req, timeout=5)
-                        log("Tunnel registered with Railway", "success")
-                    except Exception as e:
-                        log(f"Railway registration skipped: {e}", "error")
                     break
 
     threading.Thread(target=run, daemon=True).start()
@@ -404,9 +384,8 @@ async def start_session():
     # Start browser (headless=False so noVNC can see it)
     await start_browser(headless=False)
 
-    # Start Cloudflare tunnel (only if not already running)
-    if not state["tunnel_proc"]:
-        start_cloudflare_tunnel()
+    # Start Cloudflare tunnel
+    start_cloudflare_tunnel()
 
     # Navigate to login
     await state["page"].goto(PARTNER_URL, wait_until="domcontentloaded", timeout=60000)
@@ -560,6 +539,21 @@ async def proxy_novnc(path: str):
 async def get_tunnel_url():
     """Return the current tunnel URL — polled by frontend on load."""
     return {"tunnel_url": state["tunnel_url"]}
+
+
+
+@app.post("/api/register-tunnel")
+async def register_tunnel(data: dict):
+    """Called by laptop backend to register its Cloudflare tunnel URL."""
+    state["tunnel_url"] = data.get("tunnel_url")
+    log(f"Tunnel registered: {state['tunnel_url']}", "success")
+    return {"status": "registered", "tunnel_url": state["tunnel_url"]}
+
+
+@app.get("/api/tunnel-url")
+async def get_tunnel_url():
+    """Frontend polls this on load to get the current tunnel URL."""
+    return {"tunnel_url": state.get("tunnel_url")}
 
 
 if __name__ == "__main__":
