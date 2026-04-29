@@ -1,4 +1,4 @@
-"""
+6O"""
 Zomato UTR Agent — FastAPI Backend
 ===================================
 Run locally or on any server (Railway, Render, EC2).
@@ -174,7 +174,7 @@ def start_novnc():
     log("noVNC started on port 6080")
 
 
-def start_cloudflare_tunnel():
+defstart_cloudflare_tunnel():
     """Start Cloudflare tunnel and extract the public URL."""
     def run():
         proc = subprocess.Popen(
