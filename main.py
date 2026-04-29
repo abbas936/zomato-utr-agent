@@ -76,13 +76,19 @@ def log(msg, level="info"):
 # ── FastAPI app ───────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Start tunnel immediately so frontend can auto-detect it
+    start_cloudflare_tunnel()
+    log("Starting Cloudflare tunnel...")
     try:
         start_novnc()
         log("noVNC started on port 6080")
     except Exception as e:
         log(f"noVNC start skipped: {e}", "error")
     yield
-    await stop_browser()
+    try:
+        await stop_browser()
+    except:
+        pass
 
 app = FastAPI(title="Zomato UTR Agent", lifespan=lifespan)
 
@@ -384,8 +390,9 @@ async def start_session():
     # Start browser (headless=False so noVNC can see it)
     await start_browser(headless=False)
 
-    # Start Cloudflare tunnel
-    start_cloudflare_tunnel()
+    # Start Cloudflare tunnel (only if not already running)
+    if not state["tunnel_proc"]:
+        start_cloudflare_tunnel()
 
     # Navigate to login
     await state["page"].goto(PARTNER_URL, wait_until="domcontentloaded", timeout=60000)
